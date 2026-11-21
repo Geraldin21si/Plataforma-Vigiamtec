@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --vigiamtec-bg-deep: #04120b;
+  --vigiamtec-surface: #081d13;
+  --vigiamtec-surface-hover: #0e2b1d;
+  --vigiamtec-border: #16422c;
+  --vigiamtec-forest: #14532d;
+  --vigiamtec-leaf: #22a31c;
+  --vigiamtec-river: #06b6d4;
+  --vigiamtec-gold: #eab308;
+  --vigiamtec-text: #f0fdf4;
+  --vigiamtec-muted: #94b3a3;
+}
+
+@layer base {
+  html {
+    font-size: 16.5px;
+  }
+
+  body {
+    background-color: var(--vigiamtec-bg-deep);
+    color: var(--vigiamtec-text);
+  }
+}
+
+/* Scrollbar estilo terminal geoespacial con la paleta de VIGIAMTEC */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--vigiamtec-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vigiamtec-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--vigiamtec-leaf), var(--vigiamtec-river));
+}
