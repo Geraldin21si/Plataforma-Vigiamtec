@@ -1,100 +1,117 @@
-import React from 'react';
-import { Database, AlertCircle, CheckCircle2, Flame, Wind, Trees, Cpu } from 'lucide-react';
-import { GEE_DATASETS } from '../data/geeDatasets';
+﻿import React from 'react';
+import { Database, AlertTriangle, Cpu, ExternalLink, Layers } from 'lucide-react';
+import { GEE_DATASETS, GEE_APP_URL } from '../data/geeDatasets';
+import { LayerId } from '../types/gee';
 
 export const MethodologyPanel: React.FC = () => {
-  const datasets = Object.values(GEE_DATASETS);
-
-  const getIcon = (id: string) => {
-    switch (id) {
-      case 'co_fire_smoke':
-        return <Flame className="h-5 w-5 text-orange-400" />;
-      case 'no2_air_quality':
-        return <Wind className="h-5 w-5 text-pink-400" />;
-      case 'rf_land_cover':
-        return <Cpu className="h-5 w-5 text-teal-400" />;
-      default:
-        return <Trees className="h-5 w-5 text-emerald-400" />;
-    }
-  };
+  const datasetList = Object.values(GEE_DATASETS) as (typeof GEE_DATASETS)[LayerId][];
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-emerald-900/60 bg-[#071712] p-6">
-        <div className="flex items-center gap-2.5 text-emerald-400">
-          <Database className="h-5 w-5" />
-          <span className="text-xs font-bold uppercase tracking-wider">
-            Arquitectura de Datos Abiertos & Rigor Científico
-          </span>
+      <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#06b6d4]/30 bg-[#06b6d4]/10 px-3 py-1 text-xs font-medium text-[#22d3ee]">
+              <Database className="h-3.5 w-3.5" />
+              Arquitectura de Datos Geoespaciales · VIGIAMTEC
+            </div>
+            <h2 className="mt-2 text-xl font-bold text-white">
+              Fuentes Satelitales, Series Multitemporales y Limitaciones Técnicas
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm text-[#cde5d8]">
+              El MVP integra información de <strong className="text-white">Google Earth Engine</strong>,{' '}
+              <strong className="text-[#4ade80]">Sentinel-2</strong>,{' '}
+              <strong className="text-[#facc15]">Dynamic World</strong>,{' '}
+              <strong className="text-[#22d3ee]">Sentinel-1 (Radar Banda C)</strong> y{' '}
+              <strong className="text-orange-300">NASA FIRMS</strong> para facilitar el seguimiento de ecosistemas amazónicos por zonas.
+            </p>
+          </div>
+
+          <a
+            href={GEE_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#06b6d4]/40 bg-[#06b6d4]/10 px-4 py-2.5 text-xs font-semibold text-[#22d3ee] transition hover:bg-[#06b6d4]/20"
+          >
+            <span>Explorar App GEE Nativa</span>
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         </div>
-        <h2 className="mt-2 text-xl font-bold text-white">
-          Datasets de Google Earth Engine, Interpretación y Limitaciones Operativas
-        </h2>
-        <p className="mt-2 max-w-3xl text-sm text-slate-300">
-          VIGIAMTEC democratiza el acceso a teledetección satelital de grado científico sobre la Amazonía, combinando análisis de biomasa con trazadores atmosféricos de incendios (<strong className="text-orange-300">CO</strong>) y contaminación del aire (<strong className="text-pink-300">NO₂</strong>), documentando explícitamente sus alcances y restricciones físicas.
-        </p>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-[#16422c] bg-[#04120b] p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#22d3ee]">
+              <Layers className="h-4 w-4" />
+              1. Fuentes Multifuente
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#cde5d8]">
+              Combina reflectancia óptica/SWIR de Sentinel-2, clasificación arbórea de Dynamic World, retrodispersión SAR de Sentinel-1 y focos térmicos de NASA FIRMS por zona.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#16422c] bg-[#04120b] p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#4ade80]">
+              <Cpu className="h-4 w-4" />
+              2. Línea Base y Mes Parcial
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#cde5d8]">
+              Compara los valores observados y el corte parcial del mes en curso frente a la media histórica mensual (línea base), anomalías (puntaje z) y tendencia anual.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[#16422c] bg-[#04120b] p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#facc15]">
+              <AlertTriangle className="h-4 w-4" />
+              3. Latencia y Validación Cruzada
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-[#cde5d8]">
+              Las consultas amplias en Earth Engine toman 1–3 minutos; las métricas provisionales o afectadas por bruma/nubes deben contrastarse entre sensores ópticos, radar y focos térmicos.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {datasets.map((ds) => (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {datasetList.map((ds) => (
           <div
             key={ds.id}
-            className="flex flex-col justify-between rounded-2xl border border-emerald-900/60 bg-[#071712] p-5"
+            className="flex flex-col justify-between rounded-2xl border border-[#16422c] bg-[#081d13] p-5"
           >
             <div>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-800/70 bg-[#040d0a]">
-                    {getIcon(ds.id)}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white">{ds.title}</h3>
-                    <p className="font-mono text-xs text-emerald-400">{ds.geeCollectionId}</p>
-                  </div>
-                </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="rounded-md bg-[#04120b] px-2.5 py-1 font-mono text-[11px] text-[#22d3ee]">
+                  {ds.geeCollectionId}
+                </span>
+                <span className="rounded-full border border-[#eab308]/40 bg-[#eab308]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#facc15]">
+                  {ds.sourceBadge}
+                </span>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-emerald-900/50 bg-[#040d0a] p-3 text-xs">
-                <div>
-                  <span className="text-slate-500">Sensor / Misión:</span>
-                  <p className="font-medium text-slate-200">{ds.sensor}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Resolución Espacial:</span>
-                  <p className="font-medium text-slate-200">{ds.spatialResolution}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Frecuencia:</span>
-                  <p className="font-medium text-slate-200">{ds.temporalResolution}</p>
-                </div>
-                <div>
-                  <span className="text-slate-500">Latencia Cómputo GEE:</span>
-                  <p className="font-mono text-amber-300">~{ds.processingTimeSec} seg</p>
-                </div>
-              </div>
-
-              <p className="mt-4 text-xs leading-relaxed text-slate-300">
+              <h3 className="mt-3 text-base font-bold text-white">{ds.title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#cde5d8]">
                 {ds.scientificDescription}
               </p>
 
-              <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-950/25 p-3 text-xs text-emerald-200">
-                <div className="flex items-center gap-1.5 font-semibold text-emerald-300">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Criterio de Interpretación:</span>
+              <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-[#16422c] bg-[#04120b] p-3 text-xs">
+                <div>
+                  <span className="text-[#94b3a3]">Resolución:</span>
+                  <p className="font-medium text-white">{ds.spatialResolution}</p>
                 </div>
-                <p className="mt-1 leading-relaxed">{ds.interpretationNote}</p>
+                <div>
+                  <span className="text-[#94b3a3]">Unidad:</span>
+                  <p className="font-mono text-[#4ade80]">{ds.unit}</p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 border-t border-emerald-900/50 pt-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span>Limitaciones Técnicas Documentadas:</span>
-              </div>
-              <ul className="mt-2 space-y-1.5 text-xs text-slate-400">
-                {ds.limitations.map((lim, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-400" />
+            <div className="mt-4 border-t border-[#16422c] pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#facc15]">
+                Limitaciones y notas de interpretación
+              </p>
+              <ul className="mt-1.5 space-y-1 text-xs text-[#cde5d8]">
+                {ds.caveatsAndLimitations.map((lim, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#eab308]" />
                     <span>{lim}</span>
                   </li>
                 ))}

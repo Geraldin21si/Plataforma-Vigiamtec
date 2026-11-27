@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import {
   Trees,
   Flame,
-  Wind,
+  Droplets,
+  Radio,
+  Layers,
   ShieldAlert,
   Play,
   MapPin,
   Info,
   Clock,
-  CheckCircle2,
-  ArrowUpRight,
-  Layers
+  ArrowUpRight
 } from 'lucide-react';
 import { Navbar, NavTab } from './components/Navbar';
 import { LandingIntro } from './components/LandingIntro';
@@ -18,18 +18,18 @@ import { AnalyticsCharts } from './components/AnalyticsCharts';
 import { GeeComputationModal } from './components/GeeComputationModal';
 import { GeeLiveEmbed } from './components/GeeLiveEmbed';
 import { MethodologyPanel } from './components/MethodologyPanel';
-import { AMAZON_REGIONS, GEE_DATASETS, GEE_APP_URL } from './data/geeDatasets';
+import { AMAZON_ZONES, GEE_DATASETS, GEE_APP_URL } from './data/geeDatasets';
 import { LayerId } from './types/gee';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('intro');
-  const [selectedRegionId, setSelectedRegionId] = useState<string>(AMAZON_REGIONS[0].id);
-  const [selectedLayer, setSelectedLayer] = useState<LayerId>('co_fire_smoke');
+  const [selectedZoneId, setSelectedZoneId] = useState<string>(AMAZON_ZONES[0].id);
+  const [selectedLayer, setSelectedLayer] = useState<LayerId>('ndvi_full');
   const [isComputing, setIsComputing] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<string>('Hoy, 12:45 PET (Caché GEE)');
+  const [lastSyncTime, setLastSyncTime] = useState<string>('Corte 2026-11-21 (Caché GEE)');
 
-  const currentRegion =
-    AMAZON_REGIONS.find((r) => r.id === selectedRegionId) || AMAZON_REGIONS[0];
+  const currentZone =
+    AMAZON_ZONES.find((z) => z.id === selectedZoneId) || AMAZON_ZONES[0];
   const currentDataset = GEE_DATASETS[selectedLayer];
 
   const handleRunGeeAnalysis = () => {
@@ -44,12 +44,11 @@ export function App() {
     );
   };
 
-  const alertBadgeStyle = {
+  const firmsBadgeStyle = {
     Bajo: 'border-[#22a31c]/50 bg-[#22a31c]/15 text-[#4ade80]',
     Moderado: 'border-[#eab308]/50 bg-[#eab308]/15 text-[#facc15]',
-    Alto: 'border-orange-500/50 bg-orange-500/15 text-orange-300',
-    Crítico: 'border-red-500/50 bg-red-500/15 text-red-300'
-  }[currentRegion.coFireAlertLevel];
+    Alto: 'border-red-500/50 bg-red-500/15 text-red-300'
+  }[currentZone.firmsAlertLevel];
 
   return (
     <div className="min-h-screen bg-[#04120b] text-[#f0fdf4]">
@@ -58,11 +57,11 @@ export function App() {
       <GeeComputationModal
         isComputing={isComputing}
         dataset={currentDataset}
-        regionName={currentRegion.name}
+        regionName={currentZone.name}
         onComplete={handleComputationComplete}
       />
 
-      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6">
+      <main className="mx-auto max-w-[1680px] px-3 py-5 sm:px-5 lg:px-7">
         {activeTab === 'intro' && (
           <LandingIntro
             onEnterDashboard={() => setActiveTab('dashboard')}
@@ -75,36 +74,36 @@ export function App() {
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#eab308]/40 bg-[#eab308]/10 px-3 py-1 text-[11px] font-semibold text-[#facc15]">
-                  <span>MVP Incubadora · Conservación Amazónica & MRV Satelital</span>
+                  <span>Vigilancia Ambiental por Zonas · Sentinel-1 · Sentinel-2 · Dynamic World · NASA FIRMS</span>
                 </div>
                 <h1 className="mt-2.5 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                  Monitoreo Satelital de Biomasa, Incendios y Calidad del Aire
+                  Monitoreo Geoespacial de Ecosistemas Amazónicos
                 </h1>
                 <p className="mt-1.5 text-sm text-[#cde5d8]">
-                  Transformamos petabytes de datos abiertos de <strong className="text-white">Google Earth Engine</strong> en alertas tempranas accionables para organizaciones de conservación, proyectos de carbono y gobiernos regionales.
+                  Consulta integrada de series históricas (2018–2026), anomalías respecto a la media mensual y estado parcial por zona amazónica.
                 </p>
               </div>
 
-              {/* Selector de Cuenca / Área de Monitoreo */}
-              <div className="flex flex-col gap-2 rounded-xl border border-[#06b6d4]/40 bg-[#04120b]/90 p-3.5 sm:min-w-[330px]">
+              {/* Selector de Zona Amazónica */}
+              <div className="flex flex-col gap-2 rounded-xl border border-[#06b6d4]/40 bg-[#04120b]/90 p-3.5 sm:min-w-[360px]">
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#22d3ee]">
                   <MapPin className="h-3.5 w-3.5" />
-                  Unidad de Monitoreo Amazónico (AOI)
+                  Zona de Vigilancia Amazónica
                 </label>
                 <select
-                  value={selectedRegionId}
-                  onChange={(e) => setSelectedRegionId(e.target.value)}
+                  value={selectedZoneId}
+                  onChange={(e) => setSelectedZoneId(e.target.value)}
                   className="rounded-lg border border-[#16422c] bg-[#081d13] px-3 py-2 text-xs font-medium text-white focus:border-[#06b6d4] focus:outline-none"
                 >
-                  {AMAZON_REGIONS.map((region) => (
-                    <option key={region.id} value={region.id}>
-                      {region.name} ({region.department})
+                  {AMAZON_ZONES.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name} ({zone.department})
                     </option>
                   ))}
                 </select>
                 <div className="flex items-center justify-between text-[11px] text-[#94b3a3]">
-                  <span>Coord: {currentRegion.coordinates}</span>
-                  <span>{currentRegion.areaHa.toLocaleString()} ha</span>
+                  <span>Coord: {currentZone.coordinates}</span>
+                  <span>{currentZone.areaHa.toLocaleString()} ha</span>
                 </div>
               </div>
             </div>
@@ -113,12 +112,12 @@ export function App() {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Barra de Control de Capas Satelitales y Ejecución GEE */}
+            {/* Barra de Selección de Capa Satelital y Recálculo GEE */}
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 flex items-center gap-1.5 text-xs font-semibold text-[#cde5d8]">
                   <Layers className="h-4 w-4 text-[#06b6d4]" />
-                  Capa Activa:
+                  Indicador:
                 </span>
                 {(Object.keys(GEE_DATASETS) as LayerId[]).map((layerKey) => {
                   const ds = GEE_DATASETS[layerKey];
@@ -149,110 +148,118 @@ export function App() {
                   className="inline-flex items-center gap-2 rounded-xl bg-[#eab308] px-4 py-2 text-xs font-bold text-slate-950 shadow-lg transition hover:bg-[#facc15]"
                 >
                   <Play className="h-3.5 w-3.5 fill-current" />
-                  Recalcular en Earth Engine
+                  Consultar en Earth Engine
                 </button>
               </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {/* KPI 1: Biomasa & NDVI */}
-              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+            {/* 5 KPI Cards Reales del Script */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {/* KPI 1: Verde Pleno (NDVI >= 0.75) */}
+              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-[#94b3a3]">Biomasa Aérea & Vigor (NDVI)</span>
-                  <div className="rounded-lg bg-[#22a31c]/20 p-2 text-[#4ade80]">
+                  <span className="text-xs font-medium text-[#94b3a3]">Verde Pleno (NDVI ≥ 0.75)</span>
+                  <div className="rounded-lg bg-[#22a31c]/20 p-1.5 text-[#4ade80]">
                     <Trees className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-extrabold text-white">
-                    {currentRegion.estimatedBiomassTonHa} t/ha
-                  </span>
-                  <span className="font-mono text-xs text-[#4ade80]">
-                    NDVI {currentRegion.ndviMean}
-                  </span>
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-white">{currentZone.ndviFullPct}%</span>
+                  <span className="font-mono text-[11px] text-[#4ade80]">NDVI {currentZone.ndviMean}</span>
                 </div>
-                <p className="mt-2 text-xs text-[#94b3a3]">
-                  Variación interanual:{' '}
-                  <span className={currentRegion.ndviDeltaYoY >= 0 ? 'text-[#4ade80]' : 'text-[#facc15]'}>
-                    {currentRegion.ndviDeltaYoY >= 0 ? `+${currentRegion.ndviDeltaYoY}` : currentRegion.ndviDeltaYoY} NDVI
-                  </span>
+                <p className="mt-1.5 text-[11px] text-[#94b3a3]">
+                  Anomalía: <span className="text-[#4ade80]">{currentZone.ndviFullAnomaly}</span>
                 </p>
               </div>
 
-              {/* KPI 2: Monóxido de Carbono (Incendios) */}
-              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+              {/* KPI 2: Árboles (Dynamic World) */}
+              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-[#94b3a3]">CO Columna (Incendios Forestales)</span>
-                  <div className="rounded-lg bg-[#eab308]/20 p-2 text-[#facc15]">
+                  <span className="text-xs font-medium text-[#94b3a3]">Árboles (Dynamic World)</span>
+                  <div className="rounded-lg bg-[#eab308]/20 p-1.5 text-[#facc15]">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-white">{currentZone.dwTreesPct}%</span>
+                  <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-orange-300">
+                    provisional
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-[#94b3a3]">
+                  Anomalía: <span className="text-orange-300">{currentZone.dwTreesAnomaly}</span>
+                </p>
+              </div>
+
+              {/* KPI 3: NDMI Humedad Vegetación */}
+              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[#94b3a3]">NDMI (Humedad Vegetal)</span>
+                  <div className="rounded-lg bg-[#06b6d4]/20 p-1.5 text-[#22d3ee]">
+                    <Droplets className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-white">{currentZone.ndmiValue}</span>
+                  <span className="font-mono text-[11px] text-[#22d3ee]">índice SWIR</span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-[#94b3a3]">
+                  Anomalía: <span className="text-[#cde5d8]">{currentZone.ndmiAnomaly}</span>
+                </p>
+              </div>
+
+              {/* KPI 4: Radar Sentinel-1 VH */}
+              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[#94b3a3]">Radar Sentinel-1 VH</span>
+                  <div className="rounded-lg bg-[#06b6d4]/20 p-1.5 text-[#22d3ee]">
+                    <Radio className="h-4 w-4" />
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-white">{currentZone.s1RadarVhDb}</span>
+                  <span className="font-mono text-xs text-[#94b3a3]">dB</span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-[#94b3a3]">
+                  Anomalía: <span className="text-[#4ade80]">{currentZone.s1RadarAnomaly}</span> · Banda C
+                </p>
+              </div>
+
+              {/* KPI 5: NASA FIRMS Focos Activos */}
+              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-[#94b3a3]">NASA FIRMS (Focos Calor)</span>
+                  <div className="rounded-lg bg-orange-500/20 p-1.5 text-orange-300">
                     <Flame className="h-4 w-4" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-extrabold text-white">
-                    {currentRegion.coColumnDensity}
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-extrabold text-white">{currentZone.firmsHotspots}</span>
+                  <span className="text-xs text-[#94b3a3]">anomalías</span>
+                </div>
+                <div className="mt-1.5 flex items-center justify-between">
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${firmsBadgeStyle}`}>
+                    Riesgo: {currentZone.firmsAlertLevel}
                   </span>
-                  <span className="font-mono text-xs text-[#94b3a3]">mol/m²</span>
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${alertBadgeStyle}`}>
-                    Riesgo Quema: {currentRegion.coFireAlertLevel}
-                  </span>
-                  <span className="text-xs text-[#94b3a3]">{currentRegion.activeHotspots} anomalías</span>
-                </div>
-              </div>
-
-              {/* KPI 3: NO2 Humo y Contaminación del Aire */}
-              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-[#94b3a3]">NO₂ Troposférico (Humo & Aire)</span>
-                  <div className="rounded-lg bg-[#06b6d4]/20 p-2 text-[#22d3ee]">
-                    <Wind className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-extrabold text-white">
-                    {currentRegion.no2Tropospheric}
-                  </span>
-                  <span className="font-mono text-xs text-[#94b3a3]">µmol/m²</span>
-                </div>
-                <p className="mt-2 text-xs text-[#94b3a3]">
-                  Sensor Sentinel-5P TROPOMI · Trazador de plumas de humo
-                </p>
-              </div>
-
-              {/* KPI 4: Integridad Bosque Random Forest */}
-              <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-[#94b3a3]">Integridad Bosque (Random Forest)</span>
-                  <div className="rounded-lg bg-[#06b6d4]/20 p-2 text-[#22d3ee]">
-                    <CheckCircle2 className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-extrabold text-white">
-                    {currentRegion.rfForestIntegrityPct}%
-                  </span>
-                  <span className="text-xs text-[#22d3ee]">dosel conservado</span>
-                </div>
-                <p className="mt-2 text-xs text-[#94b3a3]">
-                  Modelo interoperable{' '}
                   <a
                     href={GEE_APP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center text-[#facc15] underline hover:text-white"
+                    className="inline-flex items-center text-[11px] text-[#facc15] underline hover:text-white"
                   >
-                    interopclassifierrf <ArrowUpRight className="h-3 w-3" />
+                    App GEE <ArrowUpRight className="h-3 w-3" />
                   </a>
-                </p>
+                </div>
               </div>
             </div>
 
-            {/* Ficha Contextual de la Capa Seleccionada */}
+            {/* Ficha Explicativa y Advertencias ("Ojo:") del Indicador Seleccionado */}
             <div className="grid grid-cols-1 gap-4 rounded-2xl border border-[#16422c] bg-[#081d13] p-5 lg:grid-cols-12">
               <div className="lg:col-span-7">
                 <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-[#22a31c]/20 px-2.5 py-1 text-xs font-semibold text-[#4ade80]">
+                    {currentDataset.sourceBadge}
+                  </span>
                   <span className="rounded-md bg-[#06b6d4]/15 px-2.5 py-1 font-mono text-xs font-semibold text-[#22d3ee]">
                     {currentDataset.geeCollectionId}
                   </span>
@@ -265,7 +272,7 @@ export function App() {
                   {currentDataset.scientificDescription}
                 </p>
 
-                {/* Leyenda de colores */}
+                {/* Escala de referencia */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {currentDataset.colorScale.map((c) => (
                     <div
@@ -280,14 +287,14 @@ export function App() {
                 </div>
               </div>
 
-              {/* Caja de Limitaciones Técnicas */}
+              {/* Caja "Ojo / Notas técnicas" tal como en el script */}
               <div className="rounded-xl border border-[#eab308]/35 bg-[#04120b] p-4 lg:col-span-5">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#facc15]">
                   <ShieldAlert className="h-4 w-4" />
-                  <span>Notas Metodológicas y Limitaciones del Sensor</span>
+                  <span>Ojo · Notas de Interpretación y Limitaciones</span>
                 </div>
                 <ul className="mt-2.5 space-y-2 text-xs text-[#cde5d8]">
-                  {currentDataset.limitations.map((item, index) => (
+                  {currentDataset.caveatsAndLimitations.map((item, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#eab308]" />
                       <span>{item}</span>
@@ -297,8 +304,8 @@ export function App() {
               </div>
             </div>
 
-            {/* Gráficos Analíticos */}
-            <AnalyticsCharts region={currentRegion} />
+            {/* Gráficos Históricos 2018-2026 */}
+            <AnalyticsCharts region={currentZone} />
           </div>
         )}
 

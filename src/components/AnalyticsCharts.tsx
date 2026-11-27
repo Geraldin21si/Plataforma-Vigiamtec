@@ -1,212 +1,269 @@
 import React from 'react';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ComposedChart,
-  Line,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
+  Tooltip
 } from 'recharts';
-import { RegionMetrics } from '../types/gee';
+import { AmazonZoneMetrics } from '../types/gee';
 
 interface AnalyticsChartsProps {
-  region: RegionMetrics;
+  region: AmazonZoneMetrics;
 }
 
 export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ region }) => {
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-      {/* Gráfico 1: Correlación Incendios (CO) y Contaminación (NO2) */}
-      <div className="rounded-2xl border border-emerald-900/60 bg-[#071712] p-5 xl:col-span-7">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-white">
-              Dinámica Atmosférica: Monóxido de Carbono (Incendios) vs. NO₂ (Humo y Aire)
-            </h3>
-            <p className="text-xs text-slate-400">
-              Serie temporal Sentinel-5P TROPOMI · Picos de CO confirman combustión de biomasa
-            </p>
-          </div>
-          <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 font-mono text-[11px] text-orange-300">
-            COPERNICUS/S5P/OFFL
+    <div className="space-y-5">
+      {/* Leyenda compartida estilo monitoreo GEE */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#16422c] bg-[#081d13] px-5 py-3 text-xs">
+        <span className="font-bold text-white">
+          Series Históricas Multifuente (2018 – 2026) · {region.name}
+        </span>
+        <div className="flex flex-wrap items-center gap-5 text-[#cde5d8]">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
+            Observado
           </span>
-        </div>
-
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={region.timeSeries} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#153a2e" vertical={false} />
-              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-              <YAxis
-                yAxisId="left"
-                stroke="#f97316"
-                fontSize={11}
-                tickFormatter={(v) => `${v}`}
-                label={{ value: 'CO (mol/m²)', angle: -90, position: 'insideLeft', fill: '#fb923c', fontSize: 10 }}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                stroke="#ec4899"
-                fontSize={11}
-                label={{ value: 'NO₂ (µmol/m²)', angle: 90, position: 'insideRight', fill: '#f472b6', fontSize: 10 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#040d0a',
-                  borderColor: '#153a2e',
-                  borderRadius: '12px',
-                  fontSize: '12px'
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-              <Bar
-                yAxisId="right"
-                dataKey="no2_umol"
-                name="NO₂ Contaminación Aire (µmol/m²)"
-                fill="#ec4899"
-                fillOpacity={0.35}
-                radius={[4, 4, 0, 0]}
-                barSize={26}
-              />
-              <Line
-                yAxisId="left"
-                type="monotone"
-                dataKey="co_mol"
-                name="CO Incendios / Humo (mol/m²)"
-                stroke="#f97316"
-                strokeWidth={3}
-                dot={{ r: 4, fill: '#f97316' }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-[#f97316]" />
+            Mes parcial ({region.partialCutDate})
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="w-4 border-t-2 border-dashed border-slate-400" />
+            Media del mes (línea base)
+          </span>
         </div>
       </div>
 
-      {/* Gráfico 2: Clasificación Random Forest Cobertura */}
-      <div className="rounded-2xl border border-emerald-900/60 bg-[#071712] p-5 xl:col-span-5">
-        <div className="mb-3 flex items-start justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-white">
-              Cobertura Forestal (Modelo Random Forest)
-            </h3>
-            <p className="text-xs text-slate-400">
-              Distribución interoperable sobre {region.areaHa.toLocaleString()} ha
-            </p>
-          </div>
-          <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 font-mono text-[11px] text-emerald-300">
-            RF Classifier
-          </span>
-        </div>
-
-        <div className="h-52 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={region.landCoverBreakdown}
-                dataKey="percentage"
-                nameKey="className"
-                cx="50%"
-                cy="50%"
-                innerRadius={52}
-                outerRadius={78}
-                paddingAngle={3}
-              >
-                {region.landCoverBreakdown.map((entry) => (
-                  <Cell key={entry.className} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number, _name: string, props: { payload?: { hectares?: number } }) => [
-                  `${value}% (${props?.payload?.hectares?.toLocaleString()} ha)`,
-                  'Cobertura'
-                ]}
-                contentStyle={{
-                  backgroundColor: '#040d0a',
-                  borderColor: '#153a2e',
-                  borderRadius: '10px',
-                  fontSize: '12px'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mt-2 space-y-1.5">
-          {region.landCoverBreakdown.map((item) => (
-            <div key={item.className} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-slate-300">{item.className}</span>
-              </div>
-              <span className="font-mono font-semibold text-white">{item.percentage}%</span>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Gráfico 1: Verde Pleno (NDVI >= 0.75) [%] */}
+        <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-white">
+                Verde pleno (NDVI ≥ 0.75) [%]
+              </h3>
+              <span className="rounded-md bg-[#22a31c]/20 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#4ade80]">
+                Sentinel-2
+              </span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Gráfico 3: Evolución NDVI y Estabilidad de Biomasa */}
-      <div className="rounded-2xl border border-emerald-900/60 bg-[#071712] p-5 xl:col-span-12">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-white">
-              Evolución de Vigor Vegetal (NDVI) y Retención de Biomasa Aérea
-            </h3>
-            <p className="text-xs text-slate-400">
-              Monitoreo multitemporal Sentinel-2 SR · Detección temprana de pérdida de dosel antes de tala rasa
+            <p className="mt-1 text-xs text-[#94b3a3]">
+              Último ({region.partialCutDate}): <strong className="text-white">{region.ndviFullPct}%</strong> ·{' '}
+              <span className="text-[#4ade80]">Anomalía: {region.ndviFullAnomaly}</span> · Tendencia: {region.ndviFullTrend}
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              NDVI Medio ({region.ndviMean})
-            </span>
-            <span className="flex items-center gap-1.5 text-teal-300">
-              <span className="h-2 w-2 rounded-full bg-teal-400" />
-              Índice Biomasa ({region.estimatedBiomassTonHa} t/ha)
-            </span>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={region.timeSeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#16422c" />
+                <XAxis dataKey="period" stroke="#94b3a3" fontSize={11} />
+                <YAxis stroke="#94b3a3" fontSize={11} domain={[0, 100]} unit="%" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#04120b',
+                    borderColor: '#16422c',
+                    borderRadius: '10px',
+                    color: '#f0fdf4'
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="ndviFullBaseline"
+                  name="Media del mes (%)"
+                  stroke="#94a3b8"
+                  strokeDasharray="4 4"
+                  dot={false}
+                  strokeWidth={1.8}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="ndviFullPct"
+                  name="Verde pleno (%)"
+                  stroke="#22c55e"
+                  strokeWidth={2.5}
+                  dot={{ r: 3.5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
+          <p className="mt-2.5 text-[11px] leading-relaxed text-[#94b3a3]">
+            Umbral exigente (NDVI ≥ 0.75): al no saturarse en selva densa, refleja mejor el ciclo estacional y el estrés leve del dosel.
+          </p>
         </div>
 
-        <div className="h-60 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={region.timeSeries} margin={{ top: 10, right: 16, left: -12, bottom: 0 }}>
-              <defs>
-                <linearGradient id="ndviGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#153a2e" vertical={false} />
-              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-              <YAxis domain={[0.5, 1]} stroke="#10b981" fontSize={11} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#040d0a',
-                  borderColor: '#153a2e',
-                  borderRadius: '12px',
-                  fontSize: '12px'
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="ndvi"
-                name="NDVI Sentinel-2"
-                stroke="#10b981"
-                strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#ndviGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Gráfico 2: Probabilidad de Árboles (Dynamic World) [%] */}
+        <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-white">
+                Probabilidad de árboles (Dynamic World) [%]
+              </h3>
+              <span className="rounded-md bg-[#eab308]/20 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#facc15]">
+                Dynamic World IA
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-[#94b3a3]">
+              Último (2026-11): <strong className="text-white">{region.dwTreesPct}%</strong> ·{' '}
+              <span className="text-orange-300">
+                Anomalía: {region.dwTreesAnomaly} {region.dwIsProvisional ? '⚠ provisional' : ''}
+              </span>
+            </p>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={region.timeSeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#16422c" />
+                <XAxis dataKey="period" stroke="#94b3a3" fontSize={11} />
+                <YAxis stroke="#94b3a3" fontSize={11} domain={[0, 100]} unit="%" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#04120b',
+                    borderColor: '#16422c',
+                    borderRadius: '10px',
+                    color: '#f0fdf4'
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="dwTreesBaseline"
+                  name="Media del mes (%)"
+                  stroke="#94a3b8"
+                  strokeDasharray="4 4"
+                  dot={false}
+                  strokeWidth={1.8}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="dwTreesPct"
+                  name="Probabilidad árboles (%)"
+                  stroke="#4ade80"
+                  strokeWidth={2.5}
+                  dot={{ r: 3.5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-2.5 text-[11px] leading-relaxed text-[#94b3a3]">
+            Clasificador de Google casi en tiempo real sobre Sentinel-2. La bruma o pocos datos en mes parcial pueden moverlo un par de puntos: confirmar con NDVI y radar.
+          </p>
+        </div>
+
+        {/* Gráfico 3: NDMI (Humedad de la vegetación) [índice] */}
+        <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-white">
+                NDMI (humedad de la vegetación) [índice]
+              </h3>
+              <span className="rounded-md bg-[#06b6d4]/20 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#22d3ee]">
+                Sentinel-2 SWIR
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-[#94b3a3]">
+              Último (2026-11): <strong className="text-white">{region.ndmiValue}</strong> ·{' '}
+              <span className="text-[#22d3ee]">Anomalía: {region.ndmiAnomaly}</span> · Tendencia: {region.ndmiTrend}
+            </p>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={region.timeSeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#16422c" />
+                <XAxis dataKey="period" stroke="#94b3a3" fontSize={11} />
+                <YAxis stroke="#94b3a3" fontSize={11} domain={[0.24, 0.37]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#04120b',
+                    borderColor: '#16422c',
+                    borderRadius: '10px',
+                    color: '#f0fdf4'
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="ndmiBaseline"
+                  name="Media del mes"
+                  stroke="#94a3b8"
+                  strokeDasharray="4 4"
+                  dot={false}
+                  strokeWidth={1.8}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="ndmi"
+                  name="NDMI observado"
+                  stroke="#06b6d4"
+                  strokeWidth={2.5}
+                  dot={{ r: 3.5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-2.5 text-[11px] leading-relaxed text-[#94b3a3]">
+            Contenido de agua en las hojas (NIR vs. SWIR). Si baja, las hojas están más secas (estrés hídrico). Mide agua foliar, no lluvia ni suelo.
+          </p>
+        </div>
+
+        {/* Gráfico 4: Radar Sentinel-1 VH [dB] con hueco 2022-2024 documentado */}
+        <div className="rounded-2xl border border-[#16422c] bg-[#081d13] p-5">
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold text-white">
+                Radar Sentinel-1 VH [dB] (Banda C · Atraviesa Nubes)
+              </h3>
+              <span className="rounded-md bg-[#06b6d4]/20 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#22d3ee]">
+                Sentinel-1 SAR
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-[#94b3a3]">
+              Último (2026-11): <strong className="text-white">{region.s1RadarVhDb} dB</strong> ·{' '}
+              <span className="text-[#4ade80]">Anomalía: {region.s1RadarAnomaly}</span> · Tendencia: {region.s1RadarTrend}
+            </p>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={region.timeSeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#16422c" />
+                <XAxis dataKey="period" stroke="#94b3a3" fontSize={11} />
+                <YAxis stroke="#94b3a3" fontSize={11} domain={[-14.7, -13.8]} unit=" dB" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#04120b',
+                    borderColor: '#16422c',
+                    borderRadius: '10px',
+                    color: '#f0fdf4'
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="s1BaselineDb"
+                  name="Media del mes (dB)"
+                  stroke="#94a3b8"
+                  strokeDasharray="4 4"
+                  dot={false}
+                  strokeWidth={1.8}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="s1RadarVhDb"
+                  name="Radar VH (dB)"
+                  stroke="#22c55e"
+                  strokeWidth={2.5}
+                  connectNulls={false}
+                  dot={{ r: 3.5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-2.5 text-[11px] leading-relaxed text-[#94b3a3]">
+            Nota técnica: el hueco entre 2022 y 2024 responde a la falla de Sentinel-1B en dic. 2021 y se restablece con Sentinel-1C en 2025 (no es fallo del script).
+          </p>
         </div>
       </div>
     </div>

@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Cpu, CheckCircle2, Loader2, Server } from 'lucide-react';
-import { GeeDatasetMetadata } from '../types/gee';
+import { Loader2, Satellite, CheckCircle2, Clock } from 'lucide-react';
+import { GeeDatasetSpec } from '../types/gee';
 
 interface GeeComputationModalProps {
   isComputing: boolean;
-  dataset: GeeDatasetMetadata;
+  dataset: GeeDatasetSpec;
   regionName: string;
   onComplete: () => void;
 }
 
-const PIPELINE_STEPS = [
-  'Conectando con Google Earth Engine Python/JS API...',
-  'Filtrando colección satelital y aplicando máscara de nubes (QA60 / qa_value)...',
-  'Ejecutando reducción espacial (ee.Reducer.mean / Random Forest Classifier)...',
-  'Sincronizando series temporales de biomasa, CO (incendios) y NO₂...'
+const STEPS = [
+  'Autenticando sesión en Google Earth Engine...',
+  'Filtrando colecciones Sentinel-1 / Sentinel-2 / Dynamic World / FIRMS...',
+  'Calculando series multitemporales (2018–2026) y media mensual...',
+  'Consolidando anomalías y estado parcial por zona amazónica...'
 ];
 
 export const GeeComputationModal: React.FC<GeeComputationModalProps> = ({
@@ -32,17 +32,24 @@ export const GeeComputationModal: React.FC<GeeComputationModalProps> = ({
       return;
     }
 
-    const totalDuration = 2600; // Simulación ágil para demo de pitch (explicando latencia real GEE)
-    const intervalMs = 50;
-    const increment = 100 / (totalDuration / intervalMs);
+    const totalDurationMs = 3600;
+    const intervalMs = 120;
+    const increment = 100 / (totalDurationMs / intervalMs);
 
     const timer = setInterval(() => {
       setProgress((prev) => {
-        const next = Math.min(prev + increment, 100);
-        setStepIndex(Math.min(Math.floor((next / 100) * PIPELINE_STEPS.length), PIPELINE_STEPS.length - 1));
+        const next = Math.min(100, prev + increment);
+        const newStep = Math.min(
+          STEPS.length - 1,
+          Math.floor((next / 100) * STEPS.length)
+        );
+        setStepIndex(newStep);
+
         if (next >= 100) {
           clearInterval(timer);
-          setTimeout(onComplete, 250);
+          setTimeout(() => {
+            onComplete();
+          }, 300);
         }
         return next;
       });
@@ -54,68 +61,66 @@ export const GeeComputationModal: React.FC<GeeComputationModalProps> = ({
   if (!isComputing) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-emerald-500/40 bg-[#071712] p-6 shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400">
-            <Cpu className="h-6 w-6 animate-pulse" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-[#16422c] bg-[#081d13] p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#06b6d4]/15 text-[#22d3ee]">
+              <Satellite className="h-6 w-6 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">
+                Procesando consulta en Google Earth Engine
+              </h3>
+              <p className="text-xs text-[#94b3a3]">
+                Zona: <span className="font-medium text-[#22d3ee]">{regionName}</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white">
-              Procesando Colección en Google Earth Engine
-            </h3>
-            <p className="font-mono text-xs text-emerald-400">
-              {dataset.geeCollectionId}
-            </p>
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#eab308]/40 bg-[#eab308]/10 px-2.5 py-1 text-[11px] font-medium text-[#facc15]">
+            <Clock className="h-3 w-3" />
+            ~1–3 min en GEE
+          </span>
+        </div>
+
+        <div className="mt-5 rounded-xl border border-[#16422c] bg-[#04120b] p-3.5 text-xs">
+          <div className="flex items-center justify-between text-[#94b3a3]">
+            <span>Colección / Fuente:</span>
+            <span className="font-mono text-[#22d3ee]">{dataset.geeCollectionId}</span>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[#94b3a3]">
+            <span>Indicador activo:</span>
+            <span className="font-medium text-white">{dataset.shortName}</span>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[#94b3a3]">
+            <span>Resolución espacial:</span>
+            <span className="font-medium text-[#4ade80]">{dataset.spatialResolution}</span>
           </div>
         </div>
 
-        <div className="mt-4 rounded-xl border border-emerald-900/70 bg-[#040d0a] p-3.5 text-xs text-slate-300">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Área de Interés (AOI):</span>
-            <span className="font-semibold text-white">{regionName}</span>
-          </div>
-          <div className="mt-1.5 flex items-center justify-between">
-            <span className="text-slate-400">Tiempo estimado en servidor GEE real:</span>
-            <span className="font-mono text-amber-300">~{dataset.processingTimeSec}s (2-3 min en polígonos extensos)</span>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
         <div className="mt-5">
-          <div className="mb-1.5 flex justify-between text-xs">
-            <span className="font-medium text-emerald-300">Ejecución distribuida en nube</span>
-            <span className="font-mono text-slate-300">{Math.round(progress)}%</span>
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 font-medium text-[#cde5d8]">
+              {progress < 100 ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#22d3ee]" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#4ade80]" />
+              )}
+              {STEPS[stepIndex]}
+            </span>
+            <span className="font-mono text-[#94b3a3]">{Math.round(progress)}%</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-emerald-950">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#04120b]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-75"
+              className="h-full rounded-full bg-gradient-to-r from-[#22c55e] via-[#06b6d4] to-[#eab308] transition-all duration-150"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        {/* Steps */}
-        <div className="mt-5 space-y-2.5">
-          {PIPELINE_STEPS.map((label, idx) => {
-            const done = idx < stepIndex || progress === 100;
-            const active = idx === stepIndex && progress < 100;
-            return (
-              <div key={label} className="flex items-center gap-2.5 text-xs">
-                {done ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                ) : active ? (
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-amber-400" />
-                ) : (
-                  <Server className="h-4 w-4 shrink-0 text-slate-600" />
-                )}
-                <span className={done ? 'text-slate-200' : active ? 'font-medium text-white' : 'text-slate-500'}>
-                  {label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <p className="mt-4 text-[11px] leading-relaxed text-[#94b3a3]">
+          En producción, las series multitemporales (2018–2026) y anomalías mensuales en Earth Engine pueden demorar entre 1 y 3 minutos según la extensión de la zona y la cadencia satelital. Esta simulación muestra el flujo esperado en el MVP.
+        </p>
       </div>
     </div>
   );

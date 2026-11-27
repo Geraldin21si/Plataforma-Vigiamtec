@@ -1,199 +1,241 @@
-import { GeeDatasetMetadata, RegionMetrics } from '../types/gee';
+import { AmazonZoneMetrics, GeeDatasetSpec, LayerId } from '../types/gee';
 
-export const GEE_APP_URL = 'https://interopclassifierrf.projects.earthengine.app/view/vigiamtec';
+export const GEE_APP_URL =
+  'https://ee-jalfaroc00.projects.earthengine.app/view/interopclassifierrf';
 
-export const GEE_DATASETS: Record<string, GeeDatasetMetadata> = {
-  ndvi_biomass: {
-    id: 'ndvi_biomass',
-    shortName: 'NDVI / Biomasa',
-    title: 'Vigor Vegetal y Estimación de Biomasa Aérea (Sentinel-2)',
+export const GEE_DATASETS: Record<LayerId, GeeDatasetSpec> = {
+  ndvi_full: {
+    id: 'ndvi_full',
+    shortName: 'Verde Pleno (NDVI ≥ 0.75)',
+    title: 'Verde pleno (NDVI ≥ 0.75) [%] — Dosel de Alto Vigor',
+    sourceBadge: 'Sentinel-2 · Óptico',
     geeCollectionId: 'COPERNICUS/S2_SR_HARMONIZED',
-    sensor: 'MSI (MultiSpectral Instrument) - ESA Sentinel-2A/2B',
-    spatialResolution: '10 m / píxel',
-    temporalResolution: '5 días (Composición mediana libre de nubes)',
-    unit: 'Índice NDVI (-1 a +1) / tCO₂e',
-    colorScale: [
-      { label: 'Suelo desnudo / Agua', color: '#78350f', range: '< 0.20' },
-      { label: 'Vegetación estresada / Rala', color: '#eab308', range: '0.20 - 0.50' },
-      { label: 'Bosque secundario activo', color: '#22c55e', range: '0.50 - 0.75' },
-      { label: 'Dosel primario denso (Alta biomasa)', color: '#065f46', range: '> 0.75' },
-    ],
+    spatialResolution: '10 m',
+    unit: '%',
     scientificDescription:
-      'Calcula el Índice de Vegetación de Diferencia Normalizada ((B8 - B4) / (B8 + B4)) sobre reflectancia de superficie armonizada para cuantificar actividad fotosintética, densidad del dosel y stock de carbono forestal.',
-    interpretationNote:
-      'Valores sostenidos > 0.75 indican bosque amazónico primario intacto. Caídas abruptas (> 0.18 en 30 días) alertan apertura de trochas, tala selectiva o degradación temprana.',
-    limitations: [
-      'Cobertura nubosa persistente en la Amazonía puede requerir ventanas compuestas de 15 a 30 días usando máscara QA60 / s2cloudless.',
-      'El NDVI tiende a saturarse en bosques muy densos; se complementa con clasificación Random Forest para estructura de cobertura.',
-      'El cálculo en tiempo real sobre polígonos > 50,000 ha en Google Earth Engine puede demorar entre 1 y 3 minutos.'
+      'Porcentaje del territorio con un umbral exigente de verdor (NDVI ≥ 0.75). Al no saturarse tan rápido como el NDVI promedio, refleja mucho mejor el ciclo estacional y el estrés leve del dosel amazónico.',
+    caveatsAndLimitations: [
+      'El umbral (0.75) es una elección de calibración: conviene ajustarlo mirando el mapa de cada zona (parámetro NDVI_FULL).',
+      'La línea gris en los gráficos representa la media histórica del mes para comparar si el mes parcial (2026-11) presenta anomalía.'
     ],
-    processingTimeSec: 95
+    colorScale: [
+      { label: 'Estrés / baja cobertura', color: '#eab308', range: '< 50%' },
+      { label: 'Vigor moderado', color: '#22c55e', range: '50% - 75%' },
+      { label: 'Verde pleno denso', color: '#15803d', range: '≥ 75%' }
+    ]
   },
-  co_fire_smoke: {
-    id: 'co_fire_smoke',
-    shortName: 'CO (Incendios / Humo)',
-    title: 'Monóxido de Carbono (CO) — Trazador de Plumas de Incendios Forestales',
-    geeCollectionId: 'COPERNICUS/S5P/OFFL/L3_CO',
-    sensor: 'TROPOMI - ESA Sentinel-5 Precursor',
-    spatialResolution: '1,113 m (1.1 km)',
-    temporalResolution: 'Diaria (Paso orbital ~13:30 hora local)',
-    unit: 'mol/m² (Densidad vertical total de columna)',
-    colorScale: [
-      { label: 'Línea base amazónica limpia', color: '#0ea5e9', range: '< 0.028' },
-      { label: 'Dispersión leve de humo', color: '#facc15', range: '0.028 - 0.036' },
-      { label: 'Quema activa / Pluma densa', color: '#f97316', range: '0.036 - 0.048' },
-      { label: 'Incendio forestal severo', color: '#ef4444', range: '> 0.048' },
-    ],
+  ndvi_mean: {
+    id: 'ndvi_mean',
+    shortName: 'NDVI Medio [índice]',
+    title: 'NDVI medio [índice] — Índice de Verdor (NIR vs. Rojo)',
+    sourceBadge: 'Sentinel-2 · Óptico',
+    geeCollectionId: 'COPERNICUS/S2_SR_HARMONIZED',
+    spatialResolution: '10 m',
+    unit: 'índice',
     scientificDescription:
-      'Mide la densidad vertical de columna de Monóxido de Carbono (CO) mediante espectrometría infrarroja de onda corta (SWIR). En la cuenca amazónica, el CO actúa como trazador químico directo de combustión incompleta de biomasa e incendios forestales.',
-    interpretationNote:
-      'A diferencia de las anomalías térmicas puras que pierden fuegos bajo el dosel o nubes finas, el CO detecta el penacho de humo transportado por el viento incluso horas después de iniciada la quema.',
-    limitations: [
-      'El CO específicamente rastrea emisiones de incendios y quema de biomasa; no distingue por sí solo el origen legal o ilegal de la quema sin cruce catastral.',
-      'El transporte eólico puede desplazar la pluma de CO decenas de kilómetros respecto al foco térmico original (VIIRS/FIRMS).',
-      'La agregación estadística de series temporales TROPOMI en GEE demora ~90 segundos por cuenca.'
+      'Índice de verdor calculado entre infrarrojo cercano y rojo. En selva amazónica sana suele mantenerse entre 0.70 y 0.85; valores más altos indican hojas verdes y vigorosas.',
+    caveatsAndLimitations: [
+      'Satura en dosel denso: por eso casi no cambia entre estaciones en bosque cerrado.',
+      'Para observar con mayor detalle el ciclo anual estacional, se complementa con EVI y Verde Pleno (NDVI ≥ 0.75).'
     ],
-    processingTimeSec: 110
+    colorScale: [
+      { label: 'Suelo / alteración', color: '#dc2626', range: '< 0.45' },
+      { label: 'Vegetación secundaria', color: '#eab308', range: '0.45 - 0.70' },
+      { label: 'Selva sana vigorosa', color: '#16a34a', range: '0.70 - 0.85' }
+    ]
   },
-  no2_air_quality: {
-    id: 'no2_air_quality',
-    shortName: 'NO₂ (Contaminación Aire)',
-    title: 'Dióxido de Nitrógeno (NO₂) — Humo y Contaminación Atmosférica',
-    geeCollectionId: 'COPERNICUS/S5P/OFFL/L3_NO2',
-    sensor: 'TROPOMI - ESA Sentinel-5 Precursor',
-    spatialResolution: '1,113 m (1.1 km)',
-    temporalResolution: 'Diaria',
-    unit: 'µmol/m² (Columna troposférica)',
-    colorScale: [
-      { label: 'Aire prístino', color: '#14b8a6', range: '< 15' },
-      { label: 'Aporte moderado humo/tránsito', color: '#a855f7', range: '15 - 30' },
-      { label: 'Contaminación troposférica alta', color: '#ec4899', range: '30 - 55' },
-      { label: 'Alerta crítica calidad de aire', color: '#e11d48', range: '> 55' },
-    ],
+  ndmi_moisture: {
+    id: 'ndmi_moisture',
+    shortName: 'NDMI (Humedad Vegetal)',
+    title: 'NDMI (humedad de la vegetación) [índice]',
+    sourceBadge: 'Sentinel-2 · SWIR',
+    geeCollectionId: 'COPERNICUS/S2_SR_HARMONIZED',
+    spatialResolution: '20 m',
+    unit: 'índice',
     scientificDescription:
-      'Cuantifica la densidad troposférica de Dióxido de Nitrógeno (NO₂), monitoreando simultáneamente el impacto del humo de quemas de biomasa y focos de contaminación del aire asociados a corredores viales, minería aluvial y centros poblados.',
-    interpretationNote:
-      'Al cruzar NO₂ con CO se diferencia contaminación asociada a humo de incendios (alta correlación CO + NO₂) frente a emisiones urbanas o maquinaria pesada (picos aislados de NO₂).',
-    limitations: [
-      'Vida media atmosférica corta (pocas horas), por lo que refleja emisiones recientes cercanas al horario de paso satelital.',
-      'Sensible a nubes convectivas densas (se aplica filtro qa_value > 0.75 en el script de Earth Engine).',
-      'Requiere reducción espacial en servidor GEE antes de renderizar curvas históricas.'
+      'Mide el contenido de agua dentro de las hojas combinando infrarrojo cercano (NIR) frente a infrarrojo de onda corta (SWIR). Si baja, indica hojas más secas (estrés hídrico); si sube, mayor humedad foliar.',
+    caveatsAndLimitations: [
+      'Mide exclusivamente el agua retenida en las hojas del dosel, no la lluvia caída ni la humedad del suelo.',
+      'Debe interpretarse junto con los indicadores climáticos y estacionales de la cuenca.'
     ],
-    processingTimeSec: 85
+    colorScale: [
+      { label: 'Estrés hídrico foliar', color: '#f97316', range: '< 0.25' },
+      { label: 'Humedad intermedia', color: '#38bdf8', range: '0.25 - 0.32' },
+      { label: 'Dosel bien hidratado', color: '#0284c7', range: '> 0.32' }
+    ]
   },
-  rf_land_cover: {
-    id: 'rf_land_cover',
-    shortName: 'Clasificador RF (Interoperabilidad)',
-    title: 'Clasificación Supervisada Random Forest — Cobertura y Uso de Suelo',
-    geeCollectionId: 'VIGIAMTEC/RF_INTEROP_V2 (Sentinel-2 + Landsat 8/9 + SRTM)',
-    sensor: 'Fusión Multisensor Interoperable (Optical + Radar/Topografía)',
-    spatialResolution: '10 m - 30 m',
-    temporalResolution: 'Trimestral / Bajo demanda',
-    unit: 'Clases categóricas & Probabilidad (%)',
-    colorScale: [
-      { label: 'Bosque Primario Húmedo', color: '#059669', range: 'Clase 1' },
-      { label: 'Bosque Secundario / Purma', color: '#34d399', range: 'Clase 2' },
-      { label: 'Agricultura / Pastizal', color: '#fbbf24', range: 'Clase 3' },
-      { label: 'Suelo Degradado / Minería', color: '#dc2626', range: 'Clase 4' },
-    ],
+  dynamic_world_trees: {
+    id: 'dynamic_world_trees',
+    shortName: 'Árboles (Dynamic World)',
+    title: 'Probabilidad de árboles (Dynamic World) [%]',
+    sourceBadge: 'Dynamic World · IA Google',
+    geeCollectionId: 'GOOGLE/DYNAMICWORLD/V1',
+    spatialResolution: '10 m',
+    unit: '%',
     scientificDescription:
-      'Modelo de aprendizaje automático Random Forest ejecutado en la nube de Google Earth Engine (referencia operativa interopclassifierrf) que integra bandas espectrales, índices de textura y elevación para discriminar cobertura forestal frente a intervención antrópica.',
-    interpretationNote:
-      'Permite auditar compromisos de cero deforestación y medir el porcentaje real de integridad ecológica dentro de concesiones de conservación, comunidades nativas o áreas amortiguamiento.',
-    limitations: [
-      'Es el proceso computacionalmente más intensivo: entrenar/inferir Random Forest sobre múltiples escenas puede tomar de 2 a 4 minutos en GEE.',
-      'Confusión espectral posible entre cultivos agroforestales jóvenes (cacao/café bajo sombra) y bosque secundario temprano.'
+      'Probabilidad media de cobertura arbórea estimada casi en tiempo real por el clasificador de aprendizaje profundo de Google sobre imágenes Sentinel-2.',
+    caveatsAndLimitations: [
+      'Cada imagen se clasifica por separado, por lo que la bruma o pocos datos en un mes parcial pueden mover la cifra un par de puntos (dato provisional).',
+      'Si la variación histórica es muy pequeña, el puntaje z exagera la anomalía: confirma siempre con NDVI y radar Sentinel-1 antes de emitir alerta.'
     ],
-    processingTimeSec: 150
+    colorScale: [
+      { label: 'Cobertura no arbórea', color: '#eab308', range: '< 45%' },
+      { label: 'Transición / borde', color: '#22d3ee', range: '45% - 65%' },
+      { label: 'Cobertura arbórea', color: '#16a34a', range: '> 65%' }
+    ]
+  },
+  sentinel1_radar: {
+    id: 'sentinel1_radar',
+    shortName: 'Radar Sentinel-1 VH [dB]',
+    title: 'Radar (Sentinel-1) — Retrodispersión Banda C Polarización VH [dB]',
+    sourceBadge: 'Sentinel-1 · Radar SAR',
+    geeCollectionId: 'COPERNICUS/S1_GRD',
+    spatialResolution: '10 m',
+    unit: 'dB',
+    scientificDescription:
+      'Radar de apertura sintética en banda C que atraviesa nubes y opera de día y de noche. Responde a la estructura tridimensional y humedad del dosel; caídas fuertes y sostenidas revelan pérdida de bosque o inundación.',
+    caveatsAndLimitations: [
+      'Los valores se expresan en decibelios negativos (ej. -14.14 dB); lo relevante para vigilancia es la caída sostenida respecto a su media mensual, no el signo.',
+      'Hueco histórico (aprox. 2022 a marzo de 2025): tras la falla de Sentinel-1B en dic. 2021 hubo menos adquisiciones en varias zonas hasta el restablecimiento con Sentinel-1C en 2025.'
+    ],
+    colorScale: [
+      { label: 'Caída fuerte (tala/agua)', color: '#ef4444', range: '< -15.0 dB' },
+      { label: 'Variación estacional', color: '#eab308', range: '-15.0 a -14.3 dB' },
+      { label: 'Estructura dosel estable', color: '#06b6d4', range: '> -14.3 dB' }
+    ]
+  },
+  nasa_firms: {
+    id: 'nasa_firms',
+    shortName: 'Focos de Calor (NASA FIRMS)',
+    title: 'Vigilancia Térmica y Anomalías de Fuego — NASA FIRMS',
+    sourceBadge: 'NASA FIRMS · Térmico',
+    geeCollectionId: 'FIRMS',
+    spatialResolution: '375 m - 1 km',
+    unit: 'focos',
+    scientificDescription:
+      'Detección satelital de anomalías térmicas activas para ubicar con rapidez focos de fuego dentro o en el borde de zonas amazónicas priorizadas.',
+    caveatsAndLimitations: [
+      'Complementa el análisis de estrés hídrico (NDMI) y pérdida estructural (Sentinel-1) para distinguir quemas recientes de cambios estacionales.',
+      'La cobertura nubosa muy espesa puede atenuar detecciones térmicas puntuales, por lo que el cruce con radar SAR aporta respaldo continuo.'
+    ],
+    colorScale: [
+      { label: 'Sin anomalías térmicas', color: '#22c55e', range: '0 focos' },
+      { label: 'Vigilancia preventiva', color: '#eab308', range: '1 - 5 focos' },
+      { label: 'Alerta activa en zona', color: '#ef4444', range: '> 5 focos' }
+    ]
   }
 };
 
-export const AMAZON_REGIONS: RegionMetrics[] = [
+export const AMAZON_ZONES: AmazonZoneMetrics[] = [
   {
-    id: 'tambopata',
-    name: 'Corredor Tambopata - Bahuaja Sonene',
+    id: 'tambopata-madre-de-dios',
+    name: 'Zona Priorizada Tambopata – Madre de Dios',
     department: 'Madre de Dios',
     areaHa: 142500,
-    coordinates: "12°50'S 69°17'W",
-    ndviMean: 0.81,
-    ndviDeltaYoY: -0.03,
-    estimatedBiomassTonHa: 284,
-    coColumnDensity: 0.041,
-    coFireAlertLevel: 'Alto',
-    no2Tropospheric: 34.2,
-    rfForestIntegrityPct: 91.4,
-    activeHotspots: 14,
+    coordinates: '12°50′S 69°17′W',
+    partialCutDate: '2026-11 · MES PARCIAL hasta 2026-11-21',
+    ndviFullPct: 87.53,
+    ndviFullAnomaly: '+11.73 (z = 0.41)',
+    ndviFullTrend: '+0.81 por año',
+    ndviMean: 0.78,
+    ndviMeanAnomaly: '+0.01 (z = 0.23)',
+    ndviMeanTrend: '+0 por año',
+    ndmiValue: 0.31,
+    ndmiAnomaly: '-0.01 (z = -0.76)',
+    ndmiTrend: '+0 por año',
+    dwTreesPct: 68.9,
+    dwTreesAnomaly: '-1.91 (z = -3.32)',
+    dwTreesTrend: '+0.21 por año',
+    dwIsProvisional: true,
+    s1RadarVhDb: -14.14,
+    s1RadarAnomaly: '+0.16',
+    s1RadarTrend: '0 por año',
+    firmsHotspots: 4,
+    firmsAlertLevel: 'Moderado',
     timeSeries: [
-      { month: 'Jun', ndvi: 0.84, co_mol: 0.025, no2_umol: 14.1, biomass_index: 95 },
-      { month: 'Jul', ndvi: 0.83, co_mol: 0.029, no2_umol: 18.5, biomass_index: 94 },
-      { month: 'Ago', ndvi: 0.82, co_mol: 0.038, no2_umol: 28.9, biomass_index: 92 },
-      { month: 'Sep', ndvi: 0.79, co_mol: 0.049, no2_umol: 41.0, biomass_index: 90 },
-      { month: 'Oct', ndvi: 0.80, co_mol: 0.044, no2_umol: 36.8, biomass_index: 91 },
-      { month: 'Nov', ndvi: 0.81, co_mol: 0.041, no2_umol: 34.2, biomass_index: 91.4 },
-    ],
-    landCoverBreakdown: [
-      { className: 'Bosque Primario Denso', percentage: 82.6, hectares: 117705, color: '#059669' },
-      { className: 'Bosque Secundario / Ribereño', percentage: 8.8, hectares: 12540, color: '#34d399' },
-      { className: 'Cuerpos de Agua / Humedales', percentage: 4.1, hectares: 5842, color: '#0284c7' },
-      { className: 'Intervención / Suelo Expuesto', percentage: 4.5, hectares: 6413, color: '#ef4444' },
+      { period: '2018', ndviFullPct: 78.4, ndviFullBaseline: 76.0, ndviMean: 0.76, ndviMeanBaseline: 0.77, ndmi: 0.31, ndmiBaseline: 0.32, dwTreesPct: 70.1, dwTreesBaseline: 70.5, s1RadarVhDb: -14.32, s1BaselineDb: -14.25, firmsHotspots: 3 },
+      { period: '2019', ndviFullPct: 82.1, ndviFullBaseline: 76.5, ndviMean: 0.79, ndviMeanBaseline: 0.77, ndmi: 0.30, ndmiBaseline: 0.31, dwTreesPct: 69.8, dwTreesBaseline: 70.5, s1RadarVhDb: -14.12, s1BaselineDb: -14.22, firmsHotspots: 5 },
+      { period: '2020', ndviFullPct: 74.2, ndviFullBaseline: 76.2, ndviMean: 0.75, ndviMeanBaseline: 0.77, ndmi: 0.29, ndmiBaseline: 0.31, dwTreesPct: 68.4, dwTreesBaseline: 70.4, s1RadarVhDb: -14.08, s1BaselineDb: -14.20, firmsHotspots: 7 },
+      { period: '2021', ndviFullPct: 84.6, ndviFullBaseline: 76.8, ndviMean: 0.78, ndviMeanBaseline: 0.77, ndmi: 0.33, ndmiBaseline: 0.32, dwTreesPct: 70.6, dwTreesBaseline: 70.6, s1RadarVhDb: -14.28, s1BaselineDb: -14.24, firmsHotspots: 2 },
+      { period: '2022', ndviFullPct: 79.5, ndviFullBaseline: 76.4, ndviMean: 0.77, ndviMeanBaseline: 0.77, ndmi: 0.31, ndmiBaseline: 0.31, dwTreesPct: 69.2, dwTreesBaseline: 70.5, s1RadarVhDb: null, s1BaselineDb: -14.23, firmsHotspots: 4 },
+      { period: '2023', ndviFullPct: 71.8, ndviFullBaseline: 75.9, ndviMean: 0.74, ndviMeanBaseline: 0.76, ndmi: 0.28, ndmiBaseline: 0.31, dwTreesPct: 67.9, dwTreesBaseline: 70.3, s1RadarVhDb: null, s1BaselineDb: -14.25, firmsHotspots: 9 },
+      { period: '2024', ndviFullPct: 83.4, ndviFullBaseline: 76.5, ndviMean: 0.78, ndviMeanBaseline: 0.77, ndmi: 0.32, ndmiBaseline: 0.32, dwTreesPct: 70.4, dwTreesBaseline: 70.6, s1RadarVhDb: null, s1BaselineDb: -14.22, firmsHotspots: 5 },
+      { period: '2025', ndviFullPct: 89.2, ndviFullBaseline: 76.8, ndviMean: 0.80, ndviMeanBaseline: 0.77, ndmi: 0.32, ndmiBaseline: 0.32, dwTreesPct: 70.8, dwTreesBaseline: 70.7, s1RadarVhDb: -14.10, s1BaselineDb: -14.21, firmsHotspots: 3 },
+      { period: '2026-11', ndviFullPct: 87.53, ndviFullBaseline: 75.8, ndviMean: 0.78, ndviMeanBaseline: 0.77, ndmi: 0.31, ndmiBaseline: 0.32, dwTreesPct: 68.9, dwTreesBaseline: 70.81, s1RadarVhDb: -14.14, s1BaselineDb: -14.30, firmsHotspots: 4, isPartialMonth: true }
     ]
   },
   {
-    id: 'pacaya_samiria',
-    name: 'Reserva Nacional Pacaya Samiria (Zona Amortiguamiento)',
+    id: 'pacaya-samiria-loreto',
+    name: 'Reserva Pacaya Samiria – Loreto',
     department: 'Loreto',
-    areaHa: 215800,
-    coordinates: "05°15'S 74°40'W",
-    ndviMean: 0.86,
-    ndviDeltaYoY: +0.01,
-    estimatedBiomassTonHa: 312,
-    coColumnDensity: 0.026,
-    coFireAlertLevel: 'Bajo',
-    no2Tropospheric: 12.8,
-    rfForestIntegrityPct: 96.8,
-    activeHotspots: 2,
+    areaHa: 2080000,
+    coordinates: '05°15′S 74°40′W',
+    partialCutDate: '2026-11 · MES PARCIAL hasta 2026-11-21',
+    ndviFullPct: 91.4,
+    ndviFullAnomaly: '+4.12 (z = 0.28)',
+    ndviFullTrend: '+0.35 por año',
+    ndviMean: 0.82,
+    ndviMeanAnomaly: '+0.01 (z = 0.19)',
+    ndviMeanTrend: '+0 por año',
+    ndmiValue: 0.34,
+    ndmiAnomaly: '+0.01 (z = 0.42)',
+    ndmiTrend: '+0 por año',
+    dwTreesPct: 74.2,
+    dwTreesAnomaly: '-0.65 (z = -0.84)',
+    dwTreesTrend: '+0.14 por año',
+    dwIsProvisional: true,
+    s1RadarVhDb: -13.92,
+    s1RadarAnomaly: '+0.09',
+    s1RadarTrend: '0 por año',
+    firmsHotspots: 1,
+    firmsAlertLevel: 'Bajo',
     timeSeries: [
-      { month: 'Jun', ndvi: 0.85, co_mol: 0.023, no2_umol: 11.2, biomass_index: 96 },
-      { month: 'Jul', ndvi: 0.85, co_mol: 0.024, no2_umol: 11.9, biomass_index: 96 },
-      { month: 'Ago', ndvi: 0.86, co_mol: 0.028, no2_umol: 14.5, biomass_index: 96.5 },
-      { month: 'Sep', ndvi: 0.85, co_mol: 0.031, no2_umol: 16.2, biomass_index: 96.2 },
-      { month: 'Oct', ndvi: 0.86, co_mol: 0.027, no2_umol: 13.4, biomass_index: 96.7 },
-      { month: 'Nov', ndvi: 0.86, co_mol: 0.026, no2_umol: 12.8, biomass_index: 96.8 },
-    ],
-    landCoverBreakdown: [
-      { className: 'Bosque Inundable / Primario', percentage: 89.2, hectares: 192494, color: '#059669' },
-      { className: 'Aguajales / Vegetación Húmeda', percentage: 7.6, hectares: 16401, color: '#34d399' },
-      { className: 'Cocha / Ríos Amazónicos', percentage: 2.3, hectares: 4963, color: '#0284c7' },
-      { className: 'Uso Agroforestal Comunal', percentage: 0.9, hectares: 1942, color: '#f59e0b' },
+      { period: '2018', ndviFullPct: 88.2, ndviFullBaseline: 87.1, ndviMean: 0.81, ndviMeanBaseline: 0.81, ndmi: 0.33, ndmiBaseline: 0.33, dwTreesPct: 74.5, dwTreesBaseline: 74.8, s1RadarVhDb: -14.02, s1BaselineDb: -14.01, firmsHotspots: 1 },
+      { period: '2019', ndviFullPct: 89.5, ndviFullBaseline: 87.2, ndviMean: 0.82, ndviMeanBaseline: 0.81, ndmi: 0.34, ndmiBaseline: 0.33, dwTreesPct: 74.8, dwTreesBaseline: 74.8, s1RadarVhDb: -13.95, s1BaselineDb: -14.00, firmsHotspots: 2 },
+      { period: '2020', ndviFullPct: 87.0, ndviFullBaseline: 87.0, ndviMean: 0.80, ndviMeanBaseline: 0.81, ndmi: 0.32, ndmiBaseline: 0.33, dwTreesPct: 73.9, dwTreesBaseline: 74.7, s1RadarVhDb: -13.98, s1BaselineDb: -14.01, firmsHotspots: 2 },
+      { period: '2021', ndviFullPct: 90.1, ndviFullBaseline: 87.3, ndviMean: 0.82, ndviMeanBaseline: 0.81, ndmi: 0.35, ndmiBaseline: 0.33, dwTreesPct: 75.0, dwTreesBaseline: 74.8, s1RadarVhDb: -14.05, s1BaselineDb: -14.02, firmsHotspots: 0 },
+      { period: '2022', ndviFullPct: 89.3, ndviFullBaseline: 87.2, ndviMean: 0.81, ndviMeanBaseline: 0.81, ndmi: 0.33, ndmiBaseline: 0.33, dwTreesPct: 74.6, dwTreesBaseline: 74.8, s1RadarVhDb: null, s1BaselineDb: -14.01, firmsHotspots: 1 },
+      { period: '2023', ndviFullPct: 86.4, ndviFullBaseline: 87.0, ndviMean: 0.80, ndviMeanBaseline: 0.81, ndmi: 0.31, ndmiBaseline: 0.33, dwTreesPct: 73.5, dwTreesBaseline: 74.7, s1RadarVhDb: null, s1BaselineDb: -14.02, firmsHotspots: 3 },
+      { period: '2024', ndviFullPct: 90.6, ndviFullBaseline: 87.3, ndviMean: 0.82, ndviMeanBaseline: 0.81, ndmi: 0.34, ndmiBaseline: 0.33, dwTreesPct: 74.9, dwTreesBaseline: 74.8, s1RadarVhDb: null, s1BaselineDb: -14.00, firmsHotspots: 1 },
+      { period: '2025', ndviFullPct: 91.8, ndviFullBaseline: 87.4, ndviMean: 0.83, ndviMeanBaseline: 0.81, ndmi: 0.34, ndmiBaseline: 0.33, dwTreesPct: 75.1, dwTreesBaseline: 74.8, s1RadarVhDb: -13.90, s1BaselineDb: -14.00, firmsHotspots: 1 },
+      { period: '2026-11', ndviFullPct: 91.4, ndviFullBaseline: 87.28, ndviMean: 0.82, ndviMeanBaseline: 0.81, ndmi: 0.34, ndmiBaseline: 0.33, dwTreesPct: 74.2, dwTreesBaseline: 74.85, s1RadarVhDb: -13.92, s1BaselineDb: -14.01, firmsHotspots: 1, isPartialMonth: true }
     ]
   },
   {
-    id: 'ucayali_aguatia',
-    name: 'Cuenca Media Aguaytía - Padre Abad',
+    id: 'purus-ucayali',
+    name: 'Corredor Alto Purús – Ucayali',
     department: 'Ucayali',
-    areaHa: 98400,
-    coordinates: "08°58'S 75°30'W",
-    ndviMean: 0.72,
-    ndviDeltaYoY: -0.07,
-    estimatedBiomassTonHa: 218,
-    coColumnDensity: 0.051,
-    coFireAlertLevel: 'Crítico',
-    no2Tropospheric: 46.5,
-    rfForestIntegrityPct: 78.2,
-    activeHotspots: 29,
+    areaHa: 510000,
+    coordinates: '10°12′S 71°05′W',
+    partialCutDate: '2026-11 · MES PARCIAL hasta 2026-11-21',
+    ndviFullPct: 79.8,
+    ndviFullAnomaly: '-4.25 (z = -0.62)',
+    ndviFullTrend: '-0.18 por año',
+    ndviMean: 0.75,
+    ndviMeanAnomaly: '-0.02 (z = -0.48)',
+    ndviMeanTrend: '+0 por año',
+    ndmiValue: 0.27,
+    ndmiAnomaly: '-0.03 (z = -1.15)',
+    ndmiTrend: '-0.01 por año',
+    dwTreesPct: 65.4,
+    dwTreesAnomaly: '-2.40 (z = -1.95)',
+    dwTreesTrend: '-0.12 por año',
+    dwIsProvisional: true,
+    s1RadarVhDb: -14.48,
+    s1RadarAnomaly: '-0.22',
+    s1RadarTrend: '-0.03 por año',
+    firmsHotspots: 11,
+    firmsAlertLevel: 'Alto',
     timeSeries: [
-      { month: 'Jun', ndvi: 0.78, co_mol: 0.028, no2_umol: 19.0, biomass_index: 84 },
-      { month: 'Jul', ndvi: 0.76, co_mol: 0.035, no2_umol: 26.4, biomass_index: 82 },
-      { month: 'Ago', ndvi: 0.73, co_mol: 0.047, no2_umol: 39.8, biomass_index: 80 },
-      { month: 'Sep', ndvi: 0.69, co_mol: 0.058, no2_umol: 52.1, biomass_index: 77 },
-      { month: 'Oct', ndvi: 0.71, co_mol: 0.054, no2_umol: 48.9, biomass_index: 77.8 },
-      { month: 'Nov', ndvi: 0.72, co_mol: 0.051, no2_umol: 46.5, biomass_index: 78.2 },
-    ],
-    landCoverBreakdown: [
-      { className: 'Bosque Remanente de Colina', percentage: 61.5, hectares: 60516, color: '#059669' },
-      { className: 'Bosque Secundario (Purma)', percentage: 16.7, hectares: 16433, color: '#34d399' },
-      { className: 'Cultivos / Pasturas', percentage: 15.4, hectares: 15154, color: '#fbbf24' },
-      { className: 'Suelo Quemado / Degradado', percentage: 6.4, hectares: 6297, color: '#dc2626' },
+      { period: '2018', ndviFullPct: 85.1, ndviFullBaseline: 84.0, ndviMean: 0.78, ndviMeanBaseline: 0.77, ndmi: 0.31, ndmiBaseline: 0.30, dwTreesPct: 68.5, dwTreesBaseline: 67.8, s1RadarVhDb: -14.22, s1BaselineDb: -14.25, firmsHotspots: 4 },
+      { period: '2019', ndviFullPct: 84.4, ndviFullBaseline: 84.0, ndviMean: 0.77, ndviMeanBaseline: 0.77, ndmi: 0.30, ndmiBaseline: 0.30, dwTreesPct: 68.1, dwTreesBaseline: 67.8, s1RadarVhDb: -14.25, s1BaselineDb: -14.25, firmsHotspots: 6 },
+      { period: '2020', ndviFullPct: 81.9, ndviFullBaseline: 83.8, ndviMean: 0.76, ndviMeanBaseline: 0.77, ndmi: 0.28, ndmiBaseline: 0.30, dwTreesPct: 67.2, dwTreesBaseline: 67.8, s1RadarVhDb: -14.31, s1BaselineDb: -14.26, firmsHotspots: 9 },
+      { period: '2021', ndviFullPct: 84.8, ndviFullBaseline: 84.1, ndviMean: 0.78, ndviMeanBaseline: 0.77, ndmi: 0.31, ndmiBaseline: 0.30, dwTreesPct: 68.0, dwTreesBaseline: 67.8, s1RadarVhDb: -14.27, s1BaselineDb: -14.25, firmsHotspots: 5 },
+      { period: '2022', ndviFullPct: 82.5, ndviFullBaseline: 83.9, ndviMean: 0.76, ndviMeanBaseline: 0.77, ndmi: 0.29, ndmiBaseline: 0.30, dwTreesPct: 67.0, dwTreesBaseline: 67.8, s1RadarVhDb: null, s1BaselineDb: -14.26, firmsHotspots: 8 },
+      { period: '2023', ndviFullPct: 78.2, ndviFullBaseline: 83.7, ndviMean: 0.74, ndviMeanBaseline: 0.77, ndmi: 0.26, ndmiBaseline: 0.30, dwTreesPct: 65.8, dwTreesBaseline: 67.7, s1RadarVhDb: null, s1BaselineDb: -14.26, firmsHotspots: 14 },
+      { period: '2024', ndviFullPct: 82.0, ndviFullBaseline: 83.9, ndviMean: 0.76, ndviMeanBaseline: 0.77, ndmi: 0.29, ndmiBaseline: 0.30, dwTreesPct: 66.9, dwTreesBaseline: 67.8, s1RadarVhDb: null, s1BaselineDb: -14.26, firmsHotspots: 9 },
+      { period: '2025', ndviFullPct: 81.3, ndviFullBaseline: 84.0, ndviMean: 0.76, ndviMeanBaseline: 0.77, ndmi: 0.28, ndmiBaseline: 0.30, dwTreesPct: 66.2, dwTreesBaseline: 67.8, s1RadarVhDb: -14.39, s1BaselineDb: -14.26, firmsHotspots: 10 },
+      { period: '2026-11', ndviFullPct: 79.8, ndviFullBaseline: 84.05, ndviMean: 0.75, ndviMeanBaseline: 0.77, ndmi: 0.27, ndmiBaseline: 0.30, dwTreesPct: 65.4, dwTreesBaseline: 67.8, s1RadarVhDb: -14.48, s1BaselineDb: -14.26, firmsHotspots: 11, isPartialMonth: true }
     ]
   }
 ];
